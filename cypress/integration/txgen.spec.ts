@@ -8,25 +8,28 @@ import qrs = require('../fixtures/qrs.json')
 
 describe('tx generation', () =>
 {
-	function fillTx(address: string, amount: string)
+	function fillTx(address: string, amount: string, gas: string)
 	{
 		cy.url().should('include', '/create')
-		cy.contains('To:').next('input').type(address)
-		cy.contains('Enter amount:').next('div').children('strong').children('input').as('eosvalinput')
-		cy.get('@eosvalinput').first().type(amount)
-		cy.get('@eosvalinput').last().its('attr').should((attr) => parseInt(attr('value') + "").toString() == attr('value'))
+		cy.get('[data-cy=form-to]').type(address)
+		cy.get('[data-cy=form-amount]').type(amount)
+		cy.get('[data-cy=form-gas]').type(gas)
+	}
+	function newTx()
+	{
+		showQrText(qrs.login_single_eth_wallet)
+		cy.contains(/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i).click()
+		cy.contains(/tx/i).click()
 	}
 	it('should open tx creation window', () =>
 	{
 		cy.visit('/login')
 
-		showQrText(qrs.login_single_eth_wallet)
-		cy.contains(/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i).click()
-		cy.contains(/tx/i).click()
+		newTx()
 
-		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345')
+		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '3')
 
-		cy.contains('Continue').click()
+		cy.contains(/sign/i).click()
 	})
 	interface IEthTransaction
 	{
@@ -45,11 +48,9 @@ describe('tx generation', () =>
 	{
 		cy.visit('/login')
 
-		showQrText(qrs.login_single_eth_wallet)
-		cy.contains(/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i).click()
-		cy.contains(/tx/i).click()
-		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345')
-		cy.contains('Continue').click()
+		newTx()
+		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', "73.1")
+		cy.contains(/sign/i).click()
 
 		checkShownQr(/^signTransferTx\|\d+\|.+$/).then(qr =>
 		{
@@ -65,7 +66,7 @@ describe('tx generation', () =>
 			
 			expect(tx.value).eq('45012345000000000000')
 			assert.isNumber(tx.nonce)
-			expect(tx.gasPrice).match(/^[^0]\d+00000000$/)
+			expect(tx.gasPrice).match(/^73100000000$/)
 			expect(tx.to.toLowerCase()).eq(wallet.address.toLowerCase())
 		})
 	})
@@ -73,27 +74,27 @@ describe('tx generation', () =>
 	{
 		cy.visit('/login')
 
-		showQrText(qrs.login_single_eth_wallet)
-		cy.contains(/create new tx/i).click()
-		cy.contains('Continue').should('be.disabled')
+		newTx()
+
+		cy.contains(/sign/i).should('be.disabled')
 	})
 	it('should not work with incorrect eth address', () =>
 	{
 		cy.visit('/login')
 
-		showQrText(qrs.login_single_eth_wallet)
-		cy.contains(/create new tx/i).click()
-		fillTx('zzz', '0')
-		cy.contains('Continue').should('be.disabled')
+		newTx()
+
+		fillTx('zzz', '0', '0')
+		cy.contains(/sign/i).should('be.disabled')
 	})
 	it('should not work with incorrect eth value', () =>
 	{
 		cy.visit('/login')
 
-		showQrText(qrs.login_single_eth_wallet)
-		cy.contains(/create new tx/i).click()
-		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', 'uuu')
-		cy.contains('Continue').should('be.disabled')
+		newTx()
+
+		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', 'uuu', '2')
+		cy.contains(/sign/i).should('be.disabled')
 	})
 	it('short', () =>
 	{
@@ -101,8 +102,8 @@ describe('tx generation', () =>
 		getWebrtc().jrpc.switchToQueueMode()
 
 		cy.visit('/')
-		cy.contains(/WebRTC login/i).click()
-		cy.url().should('contain', '/login')
+		cy.contains(/WebRTC/i).click()
+		cy.url().should('match', /\/login|\/webrtc/)
 	})
 	it('should generate webrtc tx', async () =>
 	{
@@ -121,14 +122,14 @@ describe('tx generation', () =>
 		// console.log('((( 2')
 		// console.log('((( 3')
 		
-		cy.url().should('match', /\/wallets/)
+		cy.contains(/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i).click()
+		cy.contains(/tx/i).click()
 		// console.log('((( 4')
-		cy.contains(/create new tx/i).click()
 		// console.log('((( 5')
-		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345')
+		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '4')
 		// console.log('((( 6')
 		
-		cy.contains('Continue').click()
+		cy.contains(/sign/i).click()
 		// console.log('((( 7')
 		
 		let [json, cb] = await webrtc.jrpc.nextMessage() as RequestHandlerTuple<IHCSimple<{tx: IEthTransaction}, { wallet: IWallet }>, string>
@@ -147,7 +148,7 @@ describe('tx generation', () =>
 
 		expect(tx.value).eq('45012345000000000000')
 		assert.isNumber(tx.nonce)
-		expect(tx.gasPrice).match(/^[^0]\d+00000000$/)
+		expect(tx.gasPrice).match(/^4000000000$/)
 		expect(tx.to.toLowerCase()).eq(wallet.address.toLowerCase())
 	})
 })

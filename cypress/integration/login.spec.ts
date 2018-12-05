@@ -14,9 +14,9 @@ describe('login test', () =>
 	})
 	afterEach(() =>
 	{
-		let dataChannel = getWebrtc().rtc.dataChannel
-		if (dataChannel)
-			dataChannel.close()
+		let rpc = getWebrtc().rtc.rpc
+		if (rpc)
+			rpc.close()
 		resetWebrtc()
 	})
 	it('should render main page', () =>
