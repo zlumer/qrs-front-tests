@@ -56,9 +56,13 @@ export function isError(json: IJsonRpcMessage): json is IHostError
 }
 
 export function parseHostMessage(msg: string): IJsonRpcMessage | undefined {
-  if (!msg) return undefined // empty message
+  if (!msg)
+    return undefined // empty message
+  if (typeof msg !== "string")
+    return undefined
 
-  if (msg.startsWith('{')) return JSON.parse(msg)
+  if (msg.startsWith('{'))
+    return JSON.parse(msg)
 
   let regex = /^.*|.*|.*$/
 

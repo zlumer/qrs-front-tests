@@ -93,6 +93,8 @@ export class JsonRpc {
   private _messageQueue = [] as RequestHandlerTupleU[]
   public switchToQueueMode() {
     this.onRequest = (json, cb) => {
+      console.log(`JSONRPCD on_request\nqueue: ${this._messageQueue.map(x => x[0]).map(x => JSON.stringify(x)).join(', ')}`
+        + `\ncallbacks: ${this._callbacksQueue.length}`)
       // console.log('*** 1')
       if (this._callbacksQueue.length) {
         // console.log('*** 2')
@@ -103,16 +105,24 @@ export class JsonRpc {
       } else {
         // console.log('*** 5')
         this._messageQueue.push([json, cb])
+        console.log(`JSONRPCD on_request (after)\nqueue: ${this._messageQueue.map(x => x[0]).map(x => JSON.stringify(x)).join(', ')}`
+        + `\ncallbacks: ${this._callbacksQueue.length}`)
         // console.log('*** 6')
       }
     }
   }
   public async nextMessage(): Promise<RequestHandlerTupleU> {
+    console.log(`JSONRPCD next_message\nqueue: ${this._messageQueue.map(x => x[0]).map(x => JSON.stringify(x)).join(', ')}`
+      + `\ncallbacks: ${this._callbacksQueue.length}`)
     if (this._messageQueue.length)
       return Promise.resolve(this._messageQueue.shift()!)
     else
       return new Promise<RequestHandlerTupleU>((res, rej) =>
-        this._callbacksQueue.push((..._) => res(_))
+        {
+          this._callbacksQueue.push((..._) => res(_))
+          console.log(`JSONRPCD next_message(after)\nqueue: ${this._messageQueue.map(x => x[0]).map(x => JSON.stringify(x)).join(', ')}`
+            + `\ncallbacks: ${this._callbacksQueue.length}`)
+        }
       )
   }
   public onMessage = (data: string) => {

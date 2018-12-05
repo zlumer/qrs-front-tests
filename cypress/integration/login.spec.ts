@@ -1,86 +1,118 @@
 import { reset as resetWebrtc, getSingleton as getWebrtc } from "../../src/helpers/webrtc/webrtcsingleton"
 
-import { checkShownQr, showQr, checkWebrtcQr } from "./interact_qr"
+import { checkShownQr, showQrText, checkWebrtcQr } from "./interact_qr"
 import { connectWebrtc } from "./interact_webrtc"
+
+import qrs = require('../fixtures/qrs.json')
 
 describe('login test', () =>
 {
-	beforeEach(async (done) =>
+	beforeEach(() =>
 	{
 		resetWebrtc()
 		getWebrtc().jrpc.switchToQueueMode()
-		done()
+	})
+	afterEach(() =>
+	{
+		let dataChannel = getWebrtc().rtc.dataChannel
+		if (dataChannel)
+			dataChannel.close()
+		resetWebrtc()
+	})
+	it('should render main page', () =>
+	{
+		cy.visit('/')
+		cy.contains(/qr/i)
+		cy.contains(/webrtc/i)
+		cy.get('[data-cy=video-ready]').should('not.exist')
 	})
 	it('should render login page correctly', () =>
 	{
 		cy.visit('/')
-		cy.contains('Login using QR code').click()
+		cy.contains('QR').click()
 		cy.url().should('include', '/login')
+		cy.get('[data-cy=video-ready]').should('exist')
 	})
 
 	it('should login with qr', () =>
 	{
+		// console.log(`#$# 1`)
 		cy.visit('/')
-		cy.contains('Login using QR code').click()
-
-		checkShownQr(/getWalletList\|\d+\|{"blockchains":\["eth","eos"\]}/)
-		showQr('video', 'login_single_eth_wallet')
-
+		// console.log(`#$# 2`)
+		cy.contains('QR').click()
+		// console.log(`#$# 3`)
+		cy.url().should('include', '/login')
+		
+		cy.get('[data-cy=video-ready]').should('exist')
+		
+		checkShownQr(/getWalletList\|\d+\|{"blockchains":\["eth"\]}/)
+		// console.log(`#$# 4`)
+		showQrText(qrs.login_single_eth_wallet)
+		// console.log(`#$# 5`)
+		
 		cy.url().should('include', '/wallets')
-		cy.contains(/eth wallet/i)
+		// console.log(`#$# 6`)
+		// cy.contains(/eth wallet/i)
+		// console.log(`#$# 7`)
 		cy.contains('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0')
+		// cy.url().should('match', /\/wallet\/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i)
+		// console.log(`#$# 8`)
+		// console.log(`#$# 9`)
 	})
 
 	it('should login directly on /login', () =>
 	{
 		cy.visit('/login')
+		
+		cy.get('[data-cy=video-ready]').should('exist')
 
-		checkShownQr(/^getWalletList\|\d+\|{"blockchains":\["eth","eos"\]}$/)
-		showQr('video', 'login_single_eth_wallet')
+		checkShownQr(/^getWalletList\|\d+\|{"blockchains":\["eth"\]}$/)
+		showQrText(qrs.login_single_eth_wallet)
 		
 		cy.url().should('include', '/wallets')
-		cy.contains(/eth wallet/i)
+		// cy.url().should('match', /\/wallet\/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i)
+		// cy.contains(/eth wallet/i)
 		cy.contains('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0')
 	})
 
-	it('should open webrtc login page', async () =>
+	it('should open webrtc login page', () =>
 	{
 		cy.visit('/')
 		// cy.contains('WebRTC login').click()
-		cy.contains(/WebRTC login/i).click()
+		cy.contains(/WebRTC/i).click()
 
 		cy.url().should('match', /[\/webrtc|\/login\?rtc=true]/)
 
-		await checkWebrtcQr()
+		checkWebrtcQr()
 	})
-	it.skip('should navigate directly to webrtc login page', async () =>
+	it.skip('should navigate directly to webrtc login page', () =>
 	{
 		cy.visit('/login?webrtc=true')
 
-		await checkWebrtcQr()
+		checkWebrtcQr()
 	})
 
-	it('should connect webrtc', async () =>
+	it('should connect webrtc', () =>
 	{
 		cy.visit('/')
-		cy.contains(/WebRTC login/i).click()
+		cy.contains(/WebRTC/i).click()
 		
-		await connectWebrtc()
+		connectWebrtc()
 	})
-	it('should connect webrtc 2nd time', async () =>
+	it('should connect webrtc 2nd time', () =>
 	{
 		cy.visit('/')
-		cy.contains(/WebRTC login/i).click()
+		cy.contains(/WebRTC/i).click()
 		
-		await connectWebrtc()
+		connectWebrtc()
 	})
 	
-	it.skip('should login with qr multiple wallets', () =>
+	it('should login with qr multiple wallets', () =>
 	{
 		cy.visit('/')
-		cy.contains('Login using QR code').click()
+		cy.contains('QR').click()
 		
-		showQr('video', 'login_multiple_eth_wallets')
+		showQrText(qrs.login_multiple_eth_wallets)
 
 		cy.url().should('include', '/wallets')
 		cy.contains('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0')

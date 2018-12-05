@@ -2,13 +2,15 @@ import { parseHostMessage, IHCSimple } from "../../src/helpers/webrtc/hostproto"
 import { reset as resetWebrtc, getSingleton as getWebrtc } from "../../src/helpers/webrtc/webrtcsingleton"
 import { RequestHandlerTuple } from "../../src/helpers/webrtc/jsonrpc"
 import { connectWebrtc } from "./interact_webrtc"
-import { showQr, checkShownQr } from "./interact_qr"
+import { checkShownQr, showQrText } from "./interact_qr"
+
+import qrs = require('../fixtures/qrs.json')
 
 describe('tx generation', () =>
 {
 	function fillTx(address: string, amount: string)
 	{
-		cy.url().should('include', '/tx/create')
+		cy.url().should('include', '/create')
 		cy.contains('To:').next('input').type(address)
 		cy.contains('Enter amount:').next('div').children('strong').children('input').as('eosvalinput')
 		cy.get('@eosvalinput').first().type(amount)
@@ -18,8 +20,9 @@ describe('tx generation', () =>
 	{
 		cy.visit('/login')
 
-		showQr('video', 'login_single_eth_wallet')
-		cy.contains(/create new tx/i).click()
+		showQrText(qrs.login_single_eth_wallet)
+		cy.contains(/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i).click()
+		cy.contains(/tx/i).click()
 
 		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345')
 
@@ -38,58 +41,61 @@ describe('tx generation', () =>
 		address: string
 		chainId: string | number
 	}
-	it('should generate tx request', async () =>
+	it('should generate tx request', () =>
 	{
 		cy.visit('/login')
 
-		showQr('video', 'login_single_eth_wallet')
-		cy.contains(/create new tx/i).click()
+		showQrText(qrs.login_single_eth_wallet)
+		cy.contains(/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i).click()
+		cy.contains(/tx/i).click()
 		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345')
 		cy.contains('Continue').click()
 
-		let qr = await checkShownQr(/^signTransferTx\|\d+\|.+$/)
-		let msg = parseHostMessage(qr) as IHCSimple<{ tx: IEthTransaction }, { wallet: IWallet }>
-		assert(msg, `host message is not defined`)
-		expect(msg.method).eq('signTransferTx')
-		assert(msg.params, `host message params are not defined`)
-		let [tx, wallet] = Array.isArray(msg.params) ? msg.params : [msg.params.tx, msg.params.wallet]
-		
-		expect(wallet.address.toLowerCase()).eq('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0'.toLowerCase())
-		expect(wallet.blockchain).eq('eth')
-		expect(wallet.chainId.toString()).eq('4')
-
-		expect(tx.value).eq('45012345000000000000')
-		assert.isNumber(tx.nonce)
-		expect(tx.gasPrice).match(/^[^0]\d+00000000$/)
-		expect(tx.to.toLowerCase()).eq(wallet.address.toLowerCase())
+		checkShownQr(/^signTransferTx\|\d+\|.+$/).then(qr =>
+		{
+			let msg = parseHostMessage(qr) as IHCSimple<{ tx: IEthTransaction }, { wallet: IWallet }>
+			assert(msg, `host message is not defined`)
+			expect(msg.method).eq('signTransferTx')
+			assert(msg.params, `host message params are not defined`)
+			let [tx, wallet] = Array.isArray(msg.params) ? msg.params : [msg.params.tx, msg.params.wallet]
+			
+			expect(wallet.address.toLowerCase()).eq('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0'.toLowerCase())
+			expect(wallet.blockchain).eq('eth')
+			expect(wallet.chainId.toString()).eq('4')
+			
+			expect(tx.value).eq('45012345000000000000')
+			assert.isNumber(tx.nonce)
+			expect(tx.gasPrice).match(/^[^0]\d+00000000$/)
+			expect(tx.to.toLowerCase()).eq(wallet.address.toLowerCase())
+		})
 	})
-	it('should not work without form values', async () =>
+	it('should not work without form values', () =>
 	{
 		cy.visit('/login')
 
-		showQr('video', 'login_single_eth_wallet')
+		showQrText(qrs.login_single_eth_wallet)
 		cy.contains(/create new tx/i).click()
 		cy.contains('Continue').should('be.disabled')
 	})
-	it('should not work with incorrect eth address', async () =>
+	it('should not work with incorrect eth address', () =>
 	{
 		cy.visit('/login')
 
-		showQr('video', 'login_single_eth_wallet')
+		showQrText(qrs.login_single_eth_wallet)
 		cy.contains(/create new tx/i).click()
 		fillTx('zzz', '0')
 		cy.contains('Continue').should('be.disabled')
 	})
-	it('should not work with incorrect eth value', async () =>
+	it('should not work with incorrect eth value', () =>
 	{
 		cy.visit('/login')
 
-		showQr('video', 'login_single_eth_wallet')
+		showQrText(qrs.login_single_eth_wallet)
 		cy.contains(/create new tx/i).click()
 		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', 'uuu')
 		cy.contains('Continue').should('be.disabled')
 	})
-	it('short', async () =>
+	it('short', () =>
 	{
 		resetWebrtc()
 		getWebrtc().jrpc.switchToQueueMode()
@@ -105,11 +111,13 @@ describe('tx generation', () =>
 		webrtc.jrpc.switchToQueueMode()
 
 		cy.visit('/')
-		cy.contains(/WebRTC login/i).click()
-		cy.url().should('contain', '/login')
+		cy.contains(/WebRTC/i).click()
+		cy.url().should('match', /\/login|\/webrtc/)
 
 		// console.log('((( 1')
-		connectWebrtc().then(walletCb => walletCb(undefined, [{address: '0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', chainId:4, blockchain:'eth'}]))
+		connectWebrtc().then(walletCb => walletCb(undefined, [
+			{address: '0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', chainId:4, blockchain:'eth'}
+		]))
 		// console.log('((( 2')
 		// console.log('((( 3')
 		
