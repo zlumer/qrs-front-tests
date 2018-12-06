@@ -30,7 +30,6 @@ export function connectWebrtc()
 	return checkWebrtcQr().then(({ sid, url }) =>
 	{
 		ws = new WebSocket(url)
-		let ice = [] as any[]
 		
 		let jrpc = new JsonRpc(msg => (/* console.log('OUT>',msg), */ws.send(msg)), (json, cb) =>
 		{
@@ -38,32 +37,25 @@ export function connectWebrtc()
 			assert(json, `connectWebrtc(): jrpc msg should be defined`)
 			expect(json.method).eq('ice')
 			let [cand] = Array.isArray(json.params) ? json.params : [json.params.ice]
-			ice ? ice.push(cand) : webrtc.rtc.pushIceCandidate(cand)
+			webrtc.rtc.signal({ candidate: cand })
 		})
 		ws.addEventListener('message', ev => jrpc.onMessage(ev.data.toString()))
+
+		webrtc.rtc.on('signal', signal =>
+		{
+			// console.log(`SIGNAL$`, signal)
+			if (signal.type == 'answer')
+				jrpc.callRaw("answer", { answer: signal.sdp })
+			if (signal.candidate)
+				jrpc.callRaw("ice", { ice: signal.candidate })
+		})
 		ws.addEventListener('open', async () =>
 		{
-			let result = await jrpc.callRaw("join", { sid }) as { offer: string}
-			// console.log(result)
+			let result = await jrpc.callRaw("join", { sid }) as { offer: string }
 			let offer = result.offer
-			// console.log(offer)
 			assert.isString(offer)
-			// console.log('#### 1')
-			let answer = await webrtc.rtc.pushOffer({ sdp: offer, type: "offer" })
-			// console.log('#### 2')
-			jrpc.callRaw("answer", { answer: answer.sdp })
-			// console.log('#### 3')
-			//@ts-ignore
+			webrtc.rtc.signal({ type: "offer", sdp: offer } as any)
 			webrtc.rtc.on('ice', cand => jrpc.callRaw('ice', { ice: cand }))
-			// console.log('#### 4')
-			await Promise.all(webrtc.rtc.candidates.map(ice => jrpc.callRaw('ice', { ice })))
-			// console.log('#### 5')
-			let iice = ice
-			// console.log('#### 6')
-			ice = undefined as any
-			// console.log('#### 7')
-			await Promise.all(iice.map(cand => webrtc.rtc.pushIceCandidate(cand)))
-			// console.log('#### 8')
 		})
 		return p
 	})

@@ -9,15 +9,16 @@ describe('login test', () =>
 {
 	beforeEach(() =>
 	{
-		resetWebrtc()
+		resetWebrtc(false)
 		getWebrtc().jrpc.switchToQueueMode()
 	})
 	afterEach(() =>
 	{
-		let rpc = getWebrtc().rtc.rpc
+		let rpc = getWebrtc().rtc
 		if (rpc)
-			rpc.close()
-		resetWebrtc()
+			rpc.destroy()
+		
+		resetWebrtc(false)
 	})
 	it('should render main page', () =>
 	{
