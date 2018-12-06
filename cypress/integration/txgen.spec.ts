@@ -15,6 +15,13 @@ describe('tx generation', () =>
 		cy.get('[data-cy=form-amount]').type(amount)
 		cy.get('[data-cy=form-gas]').type(gas)
 	}
+	function fillTxEos(address: string, amount: string, memo: string)
+	{
+		cy.url().should('include', '/create')
+		cy.get('[data-cy=form-to]').type(address)
+		cy.get('[data-cy=form-amount]').type(amount)
+		cy.get('[data-cy=form-memo]').type(memo)
+	}
 	function newTx()
 	{
 		showQrText(qrs.login_single_eth_wallet)
@@ -37,6 +44,12 @@ describe('tx generation', () =>
 		value: string
 		nonce: number
 		gasPrice: string
+	}
+	interface IEosTransaction
+	{
+		to: string
+		value: string
+		memo: string
 	}
 	interface IWallet
 	{
@@ -111,7 +124,16 @@ describe('tx generation', () =>
 		let webrtc = getWebrtc()
 		webrtc.jrpc.switchToQueueMode()
 
-		cy.visit('/')
+		cy.visit('/', {
+			onBeforeLoad: (win) =>
+			{
+				(win as any).__eth__sendTx = (str: string) =>
+				{
+					expect(str).eq(stx)
+				}
+				cy.stub(win as any, "__eth__sendTx").as("ethSendTx")
+			}
+		})
 		cy.contains(/WebRTC/i).click()
 		cy.url().should('match', /\/login|\/webrtc/)
 
@@ -150,5 +172,73 @@ describe('tx generation', () =>
 		assert.isNumber(tx.nonce)
 		expect(tx.gasPrice).match(/^4000000000$/)
 		expect(tx.to.toLowerCase()).eq(wallet.address.toLowerCase())
+
+		let stx = "0x1234611325"
+		cb(undefined, stx)
+		cy.wait("@ethSendTx").should('be.calledWithExactly', stx)
+	})
+	it('should generate eos webrtc tx', async () =>
+	{
+		resetWebrtc()
+		let webrtc = getWebrtc()
+		webrtc.jrpc.switchToQueueMode()
+
+		cy.visit('/', {
+			onBeforeLoad: (win) =>
+			{
+				(win as any).__eos__sendTx = (str: string) =>
+				{
+					expect(str).eq(stx)
+				}
+				cy.stub(win as any, "__eos__sendTx").as("eosSendTx")
+			}
+		})
+		cy.contains(/WebRTC/i).click()
+		cy.url().should('match', /\/login|\/webrtc/)
+
+		// console.log('((( 1')
+		connectWebrtc().then(walletCb => walletCb(undefined, [
+			{
+				address: 'cryptoman111',
+				chainId: 'e70aaab8997e1dfce58fbfac80cbbb8fecec7b99cf982a9444273cbc64c41473',
+				blockchain:'eos'
+			}
+		]))
+		// console.log('((( 2')
+		// console.log('((( 3')
+		
+		cy.contains(/cryptoman111/i).click()
+		cy.contains(/tx/i).click()
+		// console.log('((( 4')
+		// console.log('((( 5')
+		fillTxEos('cryptoman222', '45.0123', 'hi')
+		// console.log('((( 6')
+		
+		cy.contains(/sign/i).click()
+		// console.log('((( 7')
+		
+		let [json, cb] = await webrtc.jrpc.nextMessage() as RequestHandlerTuple<IHCSimple<{tx: IEthTransaction}, { wallet: IWallet }>, string>
+		// console.log('((( 8')
+		expect(json.method).eq('signTransferTx')
+		// console.log('((( 9')
+		let [tx, wallet] = Array.isArray(json.params) ? json.params : [json.params.tx, json.params.wallet]
+		// console.log('((( 10')
+		
+		expect(wallet.address.toLowerCase()).eq('cryptoman111'.toLowerCase())
+		// console.log('((( 11')
+		expect(wallet.blockchain).eq('eth')
+		// console.log('((( 12')
+		expect(wallet.chainId.toString()).eq('4')
+		// console.log('((( 13')
+
+		expect(tx.value).eq('45012345000000000000')
+		assert.isNumber(tx.nonce)
+		expect(tx.nonce).gte(0)
+		expect(tx.gasPrice).match(/^4000000000$/)
+		expect(tx.to.toLowerCase()).eq(wallet.address.toLowerCase())
+
+		let stx = "0x1234611325"
+		cb(undefined, stx)
+		cy.wait("@ethSendTx").should('be.calledWithExactly', stx)
 	})
 })
