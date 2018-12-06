@@ -20,7 +20,7 @@ describe('tx generation', () =>
 		cy.url().should('include', '/create')
 		cy.get('[data-cy=form-to]').type(address)
 		cy.get('[data-cy=form-amount]').type(amount)
-		cy.get('[data-cy=form-memo]').type(memo)
+		cy.get('[data-cy=form-memo]').should('exist').type(memo)
 	}
 	function newTx()
 	{
@@ -182,14 +182,12 @@ describe('tx generation', () =>
 		resetWebrtc()
 		let webrtc = getWebrtc()
 		webrtc.jrpc.switchToQueueMode()
+		let eosSendTx: (str: string) => void
 
 		cy.visit('/', {
 			onBeforeLoad: (win) =>
 			{
-				(win as any).__eos__sendTx = (str: string) =>
-				{
-					expect(str).eq(stx)
-				}
+				(win as any).__eos__sendTx = (str: string) => eosSendTx(str)
 				cy.stub(win as any, "__eos__sendTx").as("eosSendTx")
 			}
 		})
@@ -217,28 +215,31 @@ describe('tx generation', () =>
 		cy.contains(/sign/i).click()
 		// console.log('((( 7')
 		
-		let [json, cb] = await webrtc.jrpc.nextMessage() as RequestHandlerTuple<IHCSimple<{tx: IEthTransaction}, { wallet: IWallet }>, string>
-		// console.log('((( 8')
-		expect(json.method).eq('signTransferTx')
-		// console.log('((( 9')
-		let [tx, wallet] = Array.isArray(json.params) ? json.params : [json.params.tx, json.params.wallet]
-		// console.log('((( 10')
-		
-		expect(wallet.address.toLowerCase()).eq('cryptoman111'.toLowerCase())
-		// console.log('((( 11')
-		expect(wallet.blockchain).eq('eth')
-		// console.log('((( 12')
-		expect(wallet.chainId.toString()).eq('4')
-		// console.log('((( 13')
+		cy.wrap(webrtc.jrpc.nextMessage()).then((tuple) =>
+		{
+			let [json, cb] = tuple as RequestHandlerTuple<IHCSimple<{tx: IEthTransaction}, { wallet: IWallet }>, string>
+			// console.log('((( 8')
+			expect(json.method).eq('signTransferTx')
+			// console.log('((( 9')
+			let [tx, wallet] = Array.isArray(json.params) ? json.params : [json.params.tx, json.params.wallet]
+			// console.log('((( 10')
+			
+			expect(wallet.address.toLowerCase()).eq('cryptoman111'.toLowerCase())
+			// console.log('((( 11')
+			expect(wallet.blockchain).eq('eth')
+			// console.log('((( 12')
+			expect(wallet.chainId.toString()).eq('4')
+			// console.log('((( 13')
 
-		expect(tx.value).eq('45012345000000000000')
-		assert.isNumber(tx.nonce)
-		expect(tx.nonce).gte(0)
-		expect(tx.gasPrice).match(/^4000000000$/)
-		expect(tx.to.toLowerCase()).eq(wallet.address.toLowerCase())
+			expect(tx.value).eq('45012345000000000000')
+			assert.isNumber(tx.nonce)
+			expect(tx.nonce).gte(0)
+			expect(tx.gasPrice).match(/^4000000000$/)
+			expect(tx.to.toLowerCase()).eq(wallet.address.toLowerCase())
 
-		let stx = "0x1234611325"
-		cb(undefined, stx)
-		cy.wait("@ethSendTx").should('be.calledWithExactly', stx)
+			let stx = "0x1234611325"
+			cb(undefined, stx)
+			cy.wait("@ethSendTx").should('be.calledWithExactly', stx)
+		})
 	})
 })
