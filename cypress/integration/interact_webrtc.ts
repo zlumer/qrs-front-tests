@@ -2,6 +2,7 @@ import { JsonRpc, RequestHandler } from "../../src/helpers/webrtc/jsonrpc"
 import { getSingleton as getWebrtc } from "../../src/helpers/webrtc/webrtcsingleton"
 
 import { checkWebrtcQr } from "./interact_qr"
+import { parseHostMessage, IHCSimple } from "../../src/helpers/webrtc/hostproto"
 
 export function connectWebsocket(onIncoming: RequestHandler, onOpen: (offer: string, jrpc: JsonRpc) => void)
 {
@@ -23,7 +24,7 @@ export function connectWebsocket(onIncoming: RequestHandler, onOpen: (offer: str
 			let offer = result.offer
 			assert.isString(offer)
 			
-			onOpen(offer, jrpc)
+			await onOpen(offer, jrpc)
 		})
 		return [ws, jrpc] as [WebSocket, JsonRpc]
 	})
@@ -32,7 +33,7 @@ export function connectWebrtc()
 {
 	let webrtc = getWebrtc()
 	let closeWs: () => void
-	
+
 	let p = new Promise<(err: any, result: unknown) => void>((res, rej) =>
 	{
 		webrtc.jrpc.nextMessage().then(([json, cb]) =>
@@ -48,7 +49,7 @@ export function connectWebrtc()
 				expect(json.params).eql({blockchains:['eth']})
 			
 			// console.log("^^^ 8")
-			closeWs && closeWs()
+			closeWs()
 			res(cb)
 		})
 	})
@@ -76,5 +77,80 @@ export function connectWebrtc()
 		})
 
 		return p
+	})
+}
+
+export function connectFallback()
+{
+	return cy.document().then(document =>
+	{
+		return cy.get('[data-cy=webrtc-force]').should('exist').then(el =>
+		{
+			el.attr('data-force-fallback', 1)
+		}).then(() =>
+		{
+			let finish: () => void
+			let p = new Promise((res, rej) =>
+			{
+				finish = res
+			})
+			return connectWebsocket((json, cb) =>
+			{
+				expect(json.method).oneOf(['fallback', 'ice'])
+			}, (offer, jrpc) =>
+			{
+				console.log(`CYPRESS GOT OFFER: ${offer}`)
+				jrpc.switchToQueueMode()
+				getWebrtc().rtc.on('signal', signal =>
+				{
+					// console.log(`SIGNAL$`, signal)
+					if (signal.type == 'answer')
+						jrpc.callRaw("answer", { answer: signal.sdp })
+				})
+				getWebrtc().rtc.signal({ type: "offer", sdp: offer } as any)
+				return jrpc.nextMessage().then(async ([json, cb]) =>
+				{
+					// console.log('$$$$$$ 7')
+					while (json.method == 'ice')
+					{
+						// console.log('$$$$$$ -8')
+						;[json, cb] = await jrpc.nextMessage()
+						// console.log('$$$$$$ -9')
+					}
+					// console.log('$$$$$$ 10')
+					
+					expect(json.method).eq('fallback')
+					// console.log('$$$$$$ 11')
+					let [msg] = Array.isArray(json.params) ? json.params : [(json.params as any).msg]
+					// console.log('$$$$$$ 12')
+					let innerJson = parseHostMessage(msg) as IHCSimple<{ blockchains: string[] }>
+					// console.log('$$$$$$ 13')
+					assert(innerJson, `incoming fallback message should have inner message`)
+					// console.log('$$$$$$ 14')
+					expect(innerJson!.method).eq('getWalletList')
+					// console.log('$$$$$$ 15')
+					if (Array.isArray(innerJson.params))
+						expect(innerJson.params).eql([['eth']])
+					else
+						expect(innerJson.params).eql({blockchains:['eth']})
+
+					jrpc.callRaw('fallback', {
+						msg: JSON.stringify({
+							id: innerJson.id,
+							result: [
+								{address: '0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', chainId:4, blockchain:'eth'}
+							]
+						})
+					})
+					
+					cy.contains(/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i)
+
+					finish()
+				})
+			}).then(([ws, jrpc]) =>
+			{
+				return p
+			})
+		})
 	})
 }

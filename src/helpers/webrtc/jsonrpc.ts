@@ -75,8 +75,14 @@ export class JsonRpc
 
 	private _callbacksQueue = [] as RequestHandler[]
 	private _messageQueue = [] as RequestHandlerTupleU[]
+	private _queueMode = false
 	public switchToQueueMode()
 	{
+		if (this._queueMode)
+			return
+		
+		this._queueMode = true
+		
 		this.onRequest = (json, cb) =>
 		{
 			console.log(`JSONRPCD on_request\nqueue: ${this._messageQueue.map(x => x[0]).map(x => JSON.stringify(x)).join(', ')}`
