@@ -29,7 +29,7 @@ export function init(initiator: boolean)
 		// jrpc.callRaw("")
 	})
 
-	rtc.on('data', data => (console.log(`webrtc jrpc incoming:`, data), jrpc.onMessage(data.toString())))
+	rtc.on('data', data => (console.log(`CYPRESS webrtc jrpc incoming:`, data.toString()), jrpc.onMessage(data.toString())))
 	let connected = false
 
 	return {
