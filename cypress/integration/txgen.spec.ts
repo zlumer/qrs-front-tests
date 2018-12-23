@@ -26,6 +26,8 @@ describe('tx generation', () =>
 	{
 		showQrText(qrs.login_single_eth_wallet)
 		cy.contains(/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i).click()
+		cy.get('[data-cy=tx-list]').should('exist')
+		cy.get('[data-cy=error]').should('not.exist')
 		cy.contains(/tx/i).click()
 	}
 	it('should open tx creation window', () =>
