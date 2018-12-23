@@ -148,7 +148,11 @@ describe('tx generation', () =>
 		// console.log('((( 3')
 		
 		cy.contains(/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i).click()
+		cy.url().should('match', /\/eth\/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i)
 		cy.contains(/tx/i).click()
+		cy.url().should('match', /\/create/i)
+		cy.get('[data-cy=tx-list]').should('exist')
+		cy.get('[data-cy=error]').should('not.exist')
 		// console.log('((( 4')
 		// console.log('((( 5')
 		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '4')
@@ -214,10 +218,14 @@ describe('tx generation', () =>
 		// console.log('((( 3')
 		
 		cy.contains(/cryptoman111/i).click()
+		cy.url().should('match', /\/eos\/cryptoman111/i)
 		cy.contains(/tx/i).click()
-		cy.contains(/\/eos\/cryptoman111/i).click()
+		cy.url().should('match', /\/create/i)
+		cy.get('[data-cy=tx-list]').should('exist')
+		cy.get('[data-cy=error]').should('not.exist')
 		// console.log('((( 4')
 		// console.log('((( 5')
+
 		fillTxEos('cryptoman222', '45.0123', 'hi')
 		// console.log('((( 6')
 		
