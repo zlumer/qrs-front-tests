@@ -120,7 +120,7 @@ describe('tx generation', () =>
 		cy.contains(/WebRTC/i).click()
 		cy.url().should('match', /\/login|\/webrtc/)
 	})
-	it('should generate webrtc tx', () =>
+	it.only('should generate webrtc tx', () =>
 	{
 		resetWebrtc(false)
 		let webrtc = getWebrtc()
@@ -132,11 +132,13 @@ describe('tx generation', () =>
 		cy.visit('/', {
 			onBeforeLoad: (win) =>
 			{
-				(win as any).__eth__sendTx = (str: string) =>
+				let f = (win as any).__eth__sendTx = (str: string) =>
 				{
+					console.log(`CYPRESS: __eth__sendTx("${str}")`)
 					expect(str).eq(SIGNED_TX_RESPONSE)
+					return { transactionHash: SIGNED_TX_RESPONSE_HASH }
 				}
-				cy.stub(win as any, "__eth__sendTx").as("ethSendTx")
+				cy.stub(win, "__eth__sendTx" as keyof typeof win, f).as("ethSendTx")
 			}
 		})
 		cy.contains(/WebRTC/i).click()
@@ -189,6 +191,8 @@ describe('tx generation', () =>
 
 			cy.url().should('match', /\/pushtx\/eth\/0x\w{64}/)
 			cy.url().should('contain', SIGNED_TX_RESPONSE_HASH)
+			cy.get('[data-cy=result-hash]').should('exist')
+			cy.get('[data-cy=error]').should('not.exist')
 		})
 	})
 	it('should generate eos webrtc tx', () =>
