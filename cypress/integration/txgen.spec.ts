@@ -37,8 +37,18 @@ describe('tx generation', () =>
 		newTx()
 
 		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '3')
+		cy.get('[data-cy=form-usd').invoke('val').should('match', /^\d+\.\d*$/)
 
 		cy.contains(/sign/i).click()
+	})
+	it('should fill form with USD values', () =>
+	{
+		cy.visit('/login')
+
+		newTx()
+
+		cy.get('[data-cy=form-usd]').type('500.5')
+		cy.get('[data-cy=form-amount').invoke('val').should('match', /^\d+\.\d*$/)
 	})
 	interface IEthTransaction
 	{
@@ -65,6 +75,7 @@ describe('tx generation', () =>
 
 		newTx()
 		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', "73.1")
+		cy.get('[data-cy=form-usd').invoke('val').should('match', /^\d+\.\d*$/)
 		cy.contains(/sign/i).click()
 
 		checkShownQr(/^signTransferTx\|\d+\|.+$/).then(qr =>
@@ -160,6 +171,7 @@ describe('tx generation', () =>
 		// console.log('((( 4')
 		// console.log('((( 5')
 		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '4')
+		cy.get('[data-cy=form-usd').invoke('val').should('match', /^\d+\.\d*$/)
 		// console.log('((( 6')
 		
 		cy.contains(/sign/i).click()
