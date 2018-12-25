@@ -120,7 +120,7 @@ describe('tx generation', () =>
 		cy.contains(/WebRTC/i).click()
 		cy.url().should('match', /\/login|\/webrtc/)
 	})
-	it.only('should generate webrtc tx', () =>
+	it('should generate webrtc tx', () =>
 	{
 		resetWebrtc(false)
 		let webrtc = getWebrtc()
