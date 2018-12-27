@@ -59,9 +59,25 @@ describe('tx generation', () =>
 	}
 	interface IEosTransaction
 	{
-		to: string
-		value: string
-		memo: string
+		expiration: string
+		ref_block_num: number
+		ref_block_prefix: number
+		actions: [
+			{
+				name: string
+				account: string
+				authorization: [{
+					actor: string
+					permission: string
+				}],
+				data: {
+					to: string
+					from: string
+					quantity: string
+					memo: string
+				}
+			}
+		]
 	}
 	interface IWallet
 	{
@@ -186,6 +202,9 @@ describe('tx generation', () =>
 			let [tx, wallet] = Array.isArray(json.params) ? json.params : [json.params.tx, json.params.wallet]
 			// console.log('((( 10')
 			
+			assert.isDefined(tx, 'transaction should be defined')
+			assert.isDefined(wallet, 'wallet should be defined')
+			
 			expect(wallet.address.toLowerCase()).eq('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0'.toLowerCase())
 			// console.log('((( 11')
 			expect(wallet.blockchain).eq('eth')
@@ -252,30 +271,48 @@ describe('tx generation', () =>
 		
 		cy.wrap(webrtc.jrpc.nextMessage()).then(tuple =>
 		{
-			let [json, cb] = tuple as RequestHandlerTuple<IHCSimple<{tx: IEthTransaction}, { wallet: IWallet }>, string>
+			let [json, cb] = tuple as RequestHandlerTuple<IHCSimple<{transaction: IEosTransaction}, { method: string }, { wallet: IWallet }>, string>
 			
 			// console.log('((( 8')
 			expect(json.method).eq('signTransferTx')
 			// console.log('((( 9')
-			let [tx, wallet] = Array.isArray(json.params) ? json.params : [json.params.tx, json.params.wallet]
+			let [tx, abi, wallet] = Array.isArray(json.params) ? json.params : [json.params.transaction, json.params.method, json.params.wallet]
 			// console.log('((( 10')
+
+			assert.isDefined(tx, 'transaction should be defined')
+			assert.isDefined(abi, 'method should be defined!')
+			assert.isDefined(wallet, 'wallet should be defined')
 			
-			expect(wallet.address.toLowerCase()).eq('cryptoman111'.toLowerCase())
+			expect(wallet.address).eq('cryptoman111'.toLowerCase())
 			// console.log('((( 11')
-			expect(wallet.blockchain).eq('eth')
+			expect(wallet.blockchain).eq('eos')
 			// console.log('((( 12')
-			expect(wallet.chainId.toString()).eq('4')
+			expect(wallet.chainId.toString()).eq('e70aaab8997e1dfce58fbfac80cbbb8fecec7b99cf982a9444273cbc64c41473')
 			// console.log('((( 13')
 
-			expect(tx.value).eq('45012345000000000000')
-			assert.isNumber(tx.nonce)
-			expect(tx.nonce).gte(0)
-			expect(tx.gasPrice).match(/^4000000000$/)
-			expect(tx.to.toLowerCase()).eq(wallet.address.toLowerCase())
+			expect(abi).eq('transfer(from:name,to:name,quantity:asset,memo:string)')
+
+			assert.isString(tx.expiration, 'expiration should be string (and present)')
+			assert.isNumber(tx.ref_block_num, 'ref_block_num should be number (and present)')
+			assert.isNumber(tx.ref_block_prefix, 'ref_block_prefix should be number (and present)')
+			assert.isArray(tx.actions, 'tx.actions should be array')
+			assert.lengthOf(tx.actions, 1, 'tx.actions should have only one element')
+			expect(tx.actions[0].account).eq('eosio.token')
+			expect(tx.actions[0].name).eq('transfer')
+			assert.isArray(tx.actions[0].authorization)
+			assert.lengthOf(tx.actions[0].authorization, 1)
+			expect(tx.actions[0].authorization[0].actor).eq('cryptoman111')
+			expect(tx.actions[0].authorization[0].permission).eq('active')
+			expect(tx.actions[0].data).eql({
+				from: 'cryptoman111',
+				to: 'cryptoman222',
+				quantity: '45.0123 EOS',
+				memo: 'hi'
+			})
 
 			let stx = "0x1234611325"
 			cb(undefined, stx)
-			cy.wait("@eosSendTx").should('be.calledWithExactly', stx)
+			cy.get("@eosSendTx").should('be.calledWithExactly', stx)
 		})
 	})
 })
