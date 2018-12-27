@@ -122,6 +122,18 @@ describe('login test', () =>
 			checkShownQr(/^getWalletList\|\d+\|{"blockchains":\["eth"\]}$/)
 		})
 	})
+	it('should connect webrtc on 2nd try', () =>
+	{
+		cy.visit('/')
+		cy.contains(/online/i).click()
+		checkWebrtcQr().then(() =>
+		{
+			cy.go('back')
+			cy.contains(/online/i).click()
+
+			connectWebrtc()
+		})
+	})
 	
 	it('should login with qr multiple wallets', () =>
 	{
