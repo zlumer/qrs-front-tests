@@ -107,6 +107,21 @@ describe('login test', () =>
 		
 		connectWebrtc()
 	})
+	it('REGRESSION: should show qr after webrtc login', () =>
+	{
+		cy.visit('/')
+		cy.contains(/online/i).click()
+		checkWebrtcQr().then(() =>
+		{
+			cy.go('back')
+			cy.contains(/airgapped/i).click()
+
+			cy.url().should('include', '/login')
+			cy.get('[data-cy=video-ready]').should('exist')
+			
+			checkShownQr(/^getWalletList\|\d+\|{"blockchains":\["eth"\]}$/)
+		})
+	})
 	
 	it('should login with qr multiple wallets', () =>
 	{
