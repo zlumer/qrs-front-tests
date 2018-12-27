@@ -23,14 +23,14 @@ describe('login test', () =>
 	it('should render main page', () =>
 	{
 		cy.visit('/')
-		cy.contains(/qr/i)
-		cy.contains(/webrtc/i)
+		cy.contains(/airgapped/i)
+		cy.contains(/online/i)
 		cy.get('[data-cy=video-ready]').should('not.exist')
 	})
 	it('should render login page correctly', () =>
 	{
 		cy.visit('/')
-		cy.contains('QR').click()
+		cy.contains(/airgapped/i).click()
 		cy.url().should('include', '/login')
 		cy.get('[data-cy=video-ready]').should('exist')
 	})
@@ -40,7 +40,7 @@ describe('login test', () =>
 		// console.log(`#$# 1`)
 		cy.visit('/')
 		// console.log(`#$# 2`)
-		cy.contains('QR').click()
+		cy.contains(/airgapped/i).click()
 		// console.log(`#$# 3`)
 		cy.url().should('include', '/login')
 		
@@ -80,7 +80,7 @@ describe('login test', () =>
 	{
 		cy.visit('/')
 		// cy.contains('WebRTC login').click()
-		cy.contains(/WebRTC/i).click()
+		cy.contains(/online/i).click()
 
 		cy.url().should('match', /[\/webrtc|\/login\?rtc=true]/)
 
@@ -96,14 +96,14 @@ describe('login test', () =>
 	it('should connect webrtc', () =>
 	{
 		cy.visit('/')
-		cy.contains(/WebRTC/i).click()
+		cy.contains(/online/i).click()
 		
 		connectWebrtc()
 	})
 	it('should connect webrtc 2nd time', () =>
 	{
 		cy.visit('/')
-		cy.contains(/WebRTC/i).click()
+		cy.contains(/online/i).click()
 		
 		connectWebrtc()
 	})
@@ -111,7 +111,7 @@ describe('login test', () =>
 	it('should login with qr multiple wallets', () =>
 	{
 		cy.visit('/')
-		cy.contains('QR').click()
+		cy.contains(/airgapped/i).click()
 		
 		showQrText(qrs.login_multiple_eth_wallets)
 
@@ -124,7 +124,7 @@ describe('login test', () =>
 	it('should connect with websocket fallback', () =>
 	{
 		cy.visit('/')
-		cy.contains(/WebRTC/i).click()
+		cy.contains(/online/i).click()
 
 		connectFallback()
 	})
