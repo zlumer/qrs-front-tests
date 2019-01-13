@@ -20,12 +20,23 @@ describe('tx generation', () =>
 		cy.url().should('include', '/create')
 		cy.get('[data-cy=form-to]').type(address)
 		cy.get('[data-cy=form-amount]').type(amount)
-		cy.get('[data-cy=form-memo]').should('exist').type(memo)
+		if (memo)
+			cy.get('[data-cy=form-memo]').should('exist').type(memo)
+		else
+			cy.get('[data-cy=form-memo]').should('exist')
 	}
 	function newTx()
 	{
 		showQrText(qrs.login_single_eth_wallet)
 		cy.contains(/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i).click()
+		cy.get('[data-cy=tx-list]').should('exist')
+		cy.get('[data-cy=error]').should('not.exist')
+		cy.contains(/tx/i).click()
+	}
+	function newTxEos()
+	{
+		showQrText(qrs.login_single_eos_wallet)
+		cy.contains(/cryptoman111/i).click()
 		cy.get('[data-cy=tx-list]').should('exist')
 		cy.get('[data-cy=error]').should('not.exist')
 		cy.contains(/tx/i).click()
@@ -37,7 +48,8 @@ describe('tx generation', () =>
 		newTx()
 
 		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '3')
-		cy.get('[data-cy=form-usd').invoke('val').should('match', /^\d+\.\d*$/)
+		cy.wait(1000)
+		cy.get('[data-cy=form-usd]', { timeout: 10000 }).invoke('val').should('match', /^\d+\.\d*$/)
 
 		cy.contains(/sign/i).click()
 	})
@@ -47,8 +59,9 @@ describe('tx generation', () =>
 
 		newTx()
 
+		cy.wait(1000)
 		cy.get('[data-cy=form-usd]').type('500.5')
-		cy.get('[data-cy=form-amount').invoke('val').should('match', /^\d+\.\d*$/)
+		cy.get('[data-cy=form-amount', { timeout: 10000 }).invoke('val').should('match', /^\d+\.\d*$/)
 	})
 	interface IEthTransaction
 	{
@@ -91,7 +104,7 @@ describe('tx generation', () =>
 
 		newTx()
 		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', "73.1")
-		cy.get('[data-cy=form-usd').invoke('val').should('match', /^\d+\.\d*$/)
+		cy.get('[data-cy=form-usd', { timeout: 10000 }).invoke('val').should('match', /^\d+\.\d*$/)
 		cy.contains(/sign/i).click()
 
 		checkShownQr(/^signTransferTx\|\d+\|.+$/).then(qr =>
@@ -187,7 +200,7 @@ describe('tx generation', () =>
 		// console.log('((( 4')
 		// console.log('((( 5')
 		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '4')
-		cy.get('[data-cy=form-usd').invoke('val').should('match', /^\d+\.\d*$/)
+		cy.get('[data-cy=form-usd', { timeout: 10000 }).invoke('val').should('match', /^\d+\.\d*$/)
 		// console.log('((( 6')
 		
 		cy.contains(/sign/i).click()
@@ -224,6 +237,50 @@ describe('tx generation', () =>
 			cy.url().should('contain', SIGNED_TX_RESPONSE_HASH)
 			cy.get('[data-cy=result-hash]').should('exist')
 			cy.get('[data-cy=error]').should('not.exist')
+		})
+	})
+	it('should generate EOS tx request', () =>
+	{
+		cy.visit('/login')
+
+		newTxEos()
+		fillTxEos('cryptoman222', '45.4321', "")
+		cy.wait(1000)
+		cy.get('[data-cy=form-usd', { timeout: 10000 }).invoke('val').should('match', /^\d+\.\d*$/)
+		cy.contains(/sign/i).click()
+
+		checkShownQr(/^signTransferTx\|\d+\|.+$/).then(qr =>
+		{
+			console.log('QRRR: ', qr)
+			let msg = parseHostMessage(qr) as IHCSimple<{ transaction: IEosTransaction }, { method: string }, { wallet: IWallet }>
+			assert(msg, `host message is not defined`)
+			expect(msg.method).eq('signTransferTx')
+			assert(msg.params, `host message params are not defined`)
+			let [tx, abi, wallet] = Array.isArray(msg.params) ? msg.params : [msg.params.transaction, msg.params.method, msg.params.wallet]
+			
+			expect(wallet.address).eq('cryptoman111')
+			expect(wallet.blockchain).eq('eos')
+			expect(wallet.chainId.toString()).eq('e70aaab8997e1dfce58fbfac80cbbb8fecec7b99cf982a9444273cbc64c41473')
+			
+			expect(abi).eq('transfer(from:name,to:name,quantity:asset,memo:string)')
+
+			assert.isString(tx.expiration, 'expiration should be string (and present)')
+			assert.isNumber(tx.ref_block_num, 'ref_block_num should be number (and present)')
+			assert.isNumber(tx.ref_block_prefix, 'ref_block_prefix should be number (and present)')
+			assert.isArray(tx.actions, 'tx.actions should be array')
+			assert.lengthOf(tx.actions, 1, 'tx.actions should have only one element')
+			expect(tx.actions[0].account).eq('eosio.token')
+			expect(tx.actions[0].name).eq('transfer')
+			assert.isArray(tx.actions[0].authorization)
+			assert.lengthOf(tx.actions[0].authorization, 1)
+			expect(tx.actions[0].authorization[0].actor).eq('cryptoman111')
+			expect(tx.actions[0].authorization[0].permission).eq('active')
+			expect(tx.actions[0].data).eql({
+				from: 'cryptoman111',
+				to: 'cryptoman222',
+				quantity: '45.4321 EOS',
+				memo: ''
+			})
 		})
 	})
 	it('should generate eos webrtc tx', () =>
@@ -265,6 +322,8 @@ describe('tx generation', () =>
 
 		fillTxEos('cryptoman222', '45.0123', 'hi')
 		// console.log('((( 6')
+		cy.wait(1000)
+		cy.get('[data-cy=form-usd', { timeout: 10000 }).invoke('val').should('match', /^\d+\.\d*$/)
 		
 		cy.contains(/sign/i).click()
 		// console.log('((( 7')
