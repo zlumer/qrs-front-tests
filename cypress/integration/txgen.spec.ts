@@ -389,4 +389,37 @@ describe('tx generation', () =>
 			cy.get("@eosSendTx").should('be.calledWithExactly', stx)
 		})
 	})
+	it('should generate ETH token transfer', () =>
+	{
+		cy.visit('/wallet/eth/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/erc20?chainId=4')
+
+		// cy.contains(/sign/i).should('be.disabled')
+
+		cy.get('[data-cy=form-token]').type('0xf035755df96ad968a7ad52c968dbe86d52927f5b')
+		cy.contains(/MAAT/)
+		// cy.get('[data-cy=form-to]').type('0x0000000000000000000000000000000000000000')
+		cy.get('[data-cy=form-to]').type('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0')
+		cy.get('[data-cy=form-amount]').type(`0.${'0'.repeat(17)}1`)
+		cy.get('[data-cy=form-gas]').type('5')
+
+		cy.contains(/sign/i).click()
+
+		checkShownQr(/^signContractCall\|\d+\|.+$/).then(qr =>
+		{
+			console.log('QRRR: ', qr)
+			let msg = parseHostMessage(qr) as IHCSimple<{ tx: IEthTransaction }, { method: string }, { args: string[] }, { wallet: IWallet }>
+			assert(msg, `host message should be defined`)
+			expect(msg.method).eq('signContractCall')
+			assert(msg.params, `host message params should be defined`)
+			let [tx, method, args, wallet] = Array.isArray(msg.params) ? msg.params : [msg.params.tx, msg.params.method, msg.params.args, msg.params.wallet]
+			assert(tx, `tx should be defined`)
+			assert(args, `ETH contract args should be defined`)
+			assert(method, `ETH contract abi (method) should be defined`)
+			assert(wallet, `wallet should be defined`)
+			expect(args).length(2)
+			expect(args[0]).eq('0x0000000000000000000000005dcd6e2d92bc4f96f9072a25cc8d4a3a4ad07ba0')
+			expect(args[1]).eq('0x0000000000000000000000000000000000000000000000000000000000000001')
+			expect(method).eq('transfer(address,uint256)')
+		})
+	})
 })
