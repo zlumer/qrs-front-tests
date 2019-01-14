@@ -53,6 +53,21 @@ describe('tx generation', () =>
 
 		cy.contains(/sign/i).click()
 	})
+	it('should open tx creation window through direct wallet link', () =>
+	{
+		cy.visit('/wallet/eth/0x036800cca6e1b092f53dde40c30efbd4c59cb3c8?chainId=4')
+		cy.contains(/tx/i).click()
+
+		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '3')
+		cy.contains(/sign/i).click()
+	})
+	it('should open tx creation window through direct txcreate link', () =>
+	{
+		cy.visit('/wallet/eth/0x036800cca6e1b092f53dde40c30efbd4c59cb3c8/create?chainId=4')
+
+		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '3')
+		cy.contains(/sign/i).click()
+	})
 	it('should fill form with USD values', () =>
 	{
 		cy.visit('/login')
