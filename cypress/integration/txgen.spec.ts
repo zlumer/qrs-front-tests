@@ -389,6 +389,12 @@ describe('tx generation', () =>
 			cy.get("@eosSendTx").should('be.calledWithExactly', stx)
 		})
 	})
+	it('should not show erc20 button on eos wallet', () =>
+	{
+		cy.visit('/wallet/eos/cryptoman111')
+		cy.contains(/tx/i)
+		cy.contains(/erc20/i).should('not.exist')
+	})
 	it('should generate ETH token transfer', () =>
 	{
 		cy.visit('/wallet/eth/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/erc20?chainId=4')
