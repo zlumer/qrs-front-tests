@@ -31,7 +31,7 @@ describe('tx generation', () =>
 		cy.contains(/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i).click()
 		cy.get('[data-cy=tx-list]').should('exist')
 		cy.get('[data-cy=error]').should('not.exist')
-		cy.contains(/tx/i).click()
+		cy.contains(/send eth/i).click()
 	}
 	function newTxEos()
 	{
@@ -39,7 +39,7 @@ describe('tx generation', () =>
 		cy.contains(/cryptoman111/i).click()
 		cy.get('[data-cy=tx-list]').should('exist')
 		cy.get('[data-cy=error]').should('not.exist')
-		cy.contains(/tx/i).click()
+		cy.contains(/send eos/i).click()
 	}
 	it('should open tx creation window', () =>
 	{
@@ -56,7 +56,7 @@ describe('tx generation', () =>
 	it('should open tx creation window through direct wallet link', () =>
 	{
 		cy.visit('/wallet/eth/0x036800cca6e1b092f53dde40c30efbd4c59cb3c8?chainId=4')
-		cy.contains(/tx/i).click()
+		cy.contains(/send/i).click()
 
 		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '3')
 		cy.contains(/sign/i).click()
@@ -208,7 +208,7 @@ describe('tx generation', () =>
 		
 		cy.contains(/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i).click()
 		cy.url().should('match', /\/eth\/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i)
-		cy.contains(/tx/i).click()
+		cy.contains(/send/i).click()
 		cy.url().should('match', /\/create/i)
 		cy.get('[data-cy=tx-list]').should('exist')
 		cy.get('[data-cy=error]').should('not.exist')
@@ -328,7 +328,7 @@ describe('tx generation', () =>
 		
 		cy.contains(/cryptoman111/i).click()
 		cy.url().should('match', /\/eos\/cryptoman111/i)
-		cy.contains(/tx/i).click()
+		cy.contains(/send/i).click()
 		cy.url().should('match', /\/create/i)
 		cy.get('[data-cy=tx-list]').should('exist')
 		cy.get('[data-cy=error]').should('not.exist')
@@ -392,7 +392,7 @@ describe('tx generation', () =>
 	it('should not show erc20 button on eos wallet', () =>
 	{
 		cy.visit('/wallet/eos/cryptoman111')
-		cy.contains(/tx/i)
+		cy.contains(/send/i)
 		cy.contains(/erc20/i).should('not.exist')
 	})
 	it('should generate ETH token transfer', () =>
