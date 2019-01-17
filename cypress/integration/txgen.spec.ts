@@ -68,6 +68,24 @@ describe('tx generation', () =>
 		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '3')
 		cy.contains(/sign/i).click()
 	})
+	it('should open eth wallet without chain id', () =>
+	{
+		cy.visit('/wallet/eth/0x036800cca6e1b092f53dde40c30efbd4c59cb3c8')
+		cy.contains(/send/i)
+		cy.contains(/eth/i)
+		cy.visit('/wallet/eth/0x036800cca6e1b092f53dde40c30efbd4c59cb3c8/create')
+		cy.contains(/send eth/i)
+		cy.get('[data-cy=form-to]').should('exist')
+	})
+	it('should open eos wallet without chain id', () =>
+	{
+		cy.visit('/wallet/eos/cryptoman111')
+		cy.contains(/send/i)
+		cy.contains(/eos/i)
+		cy.visit('/wallet/eos/cryptoman111/create')
+		cy.contains(/send eos/i)
+		cy.get('[data-cy=form-to]').should('exist')
+	})
 	it('should fill form with USD values', () =>
 	{
 		cy.visit('/login')
