@@ -431,12 +431,14 @@ describe('tx generation', () =>
 		checkShownQr(/^signContractCall\|\d+\|.+$/).then(qr =>
 		{
 			console.log('QRRR: ', qr)
-			let msg = parseHostMessage(qr) as IHCSimple<{ tx: IEthTransaction }, { method: string }, { args: string[] }, { wallet: IWallet }>
+			let msg = parseHostMessage(qr) as IHCSimple<{ tx: IEthTransaction & {data: string,gasLimit:string} }, { abi: { method: string, args: string[] } }, { wallet: IWallet }>
 			assert(msg, `host message should be defined`)
 			expect(msg.method).eq('signContractCall')
 			assert(msg.params, `host message params should be defined`)
-			let [tx, method, args, wallet] = Array.isArray(msg.params) ? msg.params : [msg.params.tx, msg.params.method, msg.params.args, msg.params.wallet]
+			let [tx, abi, wallet] = Array.isArray(msg.params) ? msg.params : [msg.params.tx, msg.params.abi, msg.params.wallet]
 			assert(tx, `tx should be defined`)
+			assert(abi, `abi should be defined`)
+			let {args, method} = abi
 			assert(args, `ETH contract args should be defined`)
 			assert(method, `ETH contract abi (method) should be defined`)
 			assert(wallet, `wallet should be defined`)
@@ -444,6 +446,8 @@ describe('tx generation', () =>
 			expect(args[0]).eq('0x0000000000000000000000005dcd6e2d92bc4f96f9072a25cc8d4a3a4ad07ba0')
 			expect(args[1]).eq('0x0000000000000000000000000000000000000000000000000000000000000001')
 			expect(method).eq('transfer(address,uint256)')
+			expect(tx.data).eq('0xa9059cbb0000000000000000000000005dcd6e2d92bc4f96f9072a25cc8d4a3a4ad07ba00000000000000000000000000000000000000000000000000000000000000001')
+			expect(parseInt(tx.gasLimit)).gte(50000)
 		})
 	})
 })
