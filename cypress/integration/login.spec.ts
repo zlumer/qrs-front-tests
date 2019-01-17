@@ -51,12 +51,12 @@ describe('login test', () =>
 		showQrText(qrs.login_single_eth_wallet)
 		// console.log(`#$# 5`)
 		
-		cy.url().should('include', '/wallets')
+		// cy.url().should('include', '/wallets')
 		// console.log(`#$# 6`)
 		// cy.contains(/eth wallet/i)
 		// console.log(`#$# 7`)
-		cy.contains('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0')
-		// cy.url().should('match', /\/wallet\/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i)
+		// cy.contains('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0')
+		cy.url().should('match', /\/wallet\/eth\/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i)
 		// console.log(`#$# 8`)
 		// console.log(`#$# 9`)
 	})
@@ -70,9 +70,9 @@ describe('login test', () =>
 		checkShownQr(/^getWalletList\|\d+\|{"blockchains":\["eth"\]}$/)
 		showQrText(qrs.login_single_eth_wallet)
 		
-		cy.url().should('include', '/wallets')
-		// cy.url().should('match', /\/wallet\/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i)
-		// cy.contains(/eth wallet/i)
+		// cy.url().should('include', '/wallets')
+		cy.url().should('match', /\/wallet\/eth\/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/i)
+		cy.contains(/eth wallet/i)
 		cy.contains('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0')
 	})
 
