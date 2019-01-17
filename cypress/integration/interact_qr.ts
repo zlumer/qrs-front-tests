@@ -69,7 +69,7 @@ export function checkShownQr(text: string | RegExp)
 {
 	// console.log('&&& 1')
 	
-	return cy.get('[data-cy=qr-image]').should('exist').then((elem) =>
+	return cy.get('[data-cy=qr-image]').should('exist').should('be.visible').then((elem) =>
 	{
 		// console.log('&&& 3')
 		return getQrDataPng(elem).then(qr =>
