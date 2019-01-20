@@ -48,7 +48,6 @@ describe('tx generation', () =>
 		newTx()
 
 		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '3')
-		cy.wait(1000)
 		cy.get('[data-cy=form-usd]', { timeout: 10000 }).invoke('val').should('match', /^\d+\.\d*$/)
 
 		cy.contains(/sign/i).click()
@@ -92,7 +91,6 @@ describe('tx generation', () =>
 
 		newTx()
 
-		cy.wait(1000)
 		cy.get('[data-cy=form-usd]').type('500.5')
 		cy.get('[data-cy=form-amount', { timeout: 10000 }).invoke('val').should('match', /^\d+\.\d*$/)
 	})
@@ -278,7 +276,6 @@ describe('tx generation', () =>
 
 		newTxEos()
 		fillTxEos('cryptoman222', '45.4321', "")
-		cy.wait(1000)
 		cy.get('[data-cy=form-usd', { timeout: 10000 }).invoke('val').should('match', /^\d+\.\d*$/)
 		cy.contains(/sign/i).click()
 
@@ -355,7 +352,6 @@ describe('tx generation', () =>
 
 		fillTxEos('cryptoman222', '45.0123', 'hi')
 		// console.log('((( 6')
-		cy.wait(1000)
 		cy.get('[data-cy=form-usd', { timeout: 10000 }).invoke('val').should('match', /^\d+\.\d*$/)
 		
 		cy.contains(/sign/i).click()
