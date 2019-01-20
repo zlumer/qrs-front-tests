@@ -142,7 +142,6 @@ describe('login test', () =>
 		
 		showQrText(qrs.login_multiple_eth_wallets)
 
-		cy.url().should('include', '/wallets')
 		cy.contains('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0')
 		cy.contains('0x30384424F1Ab508F1f82b58f1335f343ABdF68AE')
 		cy.contains('0x1AD80eC32FD6Ef24e80801e90C5f7e32950C2D05')
