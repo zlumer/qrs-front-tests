@@ -415,9 +415,9 @@ describe('tx generation', () =>
 
 		// cy.contains(/sign/i).should('be.disabled')
 
-		cy.get('[data-cy=form-token]').type('0xf035755df96ad968a7ad52c968dbe86d52927f5b')
+		cy.get('[data-cy=form-token] input').type('0xf035755df96ad968a7ad52c968dbe86d52927f5b{enter}')
 		cy.contains(/MAAT/)
-		cy.contains(/Your balance\: .* MAAT/i)
+		cy.contains(/Your balance\: \d+(\.\d+)? MAAT/i)
 		// cy.get('[data-cy=form-to]').type('0x0000000000000000000000000000000000000000')
 		cy.get('[data-cy=form-to]').type('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0')
 		cy.get('[data-cy=form-amount]').type(`0.${'0'.repeat(17)}1`)
