@@ -86,9 +86,9 @@ describe('login test', () =>
 
 		checkWebrtcQr()
 	})
-	it.skip('should navigate directly to webrtc login page', () =>
+	it('should navigate directly to webrtc login page', () =>
 	{
-		cy.visit('/login?webrtc=true')
+		cy.visit('/webrtc')
 
 		checkWebrtcQr()
 	})
