@@ -8,12 +8,43 @@ import qrs = require('../fixtures/qrs.json')
 
 describe('tx generation', () =>
 {
-	function fillTx(address: string, amount: string, gas: string)
+	function fillTx(address: string, amount: string)
 	{
 		cy.url().should('include', '/create')
 		cy.get('[data-cy=form-to]').type(address)
 		cy.get('[data-cy=form-amount]').type(amount)
-		cy.get('[data-cy=form-gas]').type(gas)
+	}
+	function getEthGas()
+	{
+		return cy.get('[data-cy=total-gas]').then(subj => subj.text())
+	}
+	function getGasPrice()
+	{
+		return cy.get('.vue-slider-tooltip-top > .vue-slider-tooltip').then(subj => subj.text())
+	}
+	function gweiToEth(gwei: string)
+	{
+		return "" + parseFloat(gwei) * 1000000000
+	}
+	function checkGasPriceFactory(tag: string = '')
+	{
+		cy.get('[data-cy=gas-slider]').should('exist')
+		let total = `gasTotal${tag}`
+		let price = `gasPrice${tag}`
+		getEthGas().as(total)
+		getGasPrice().as(price)
+		return {
+			total: () => cy.get(`@${total}`).then(x => expect(x).match(/^0\.\d* ETH$/)),
+			price: (compare?: string) => cy.get(`@${price}`).then(x =>
+			{
+				expect(x).match(/^\d+(\.\d+)?$/)
+				if (typeof compare === 'undefined')
+					return
+				
+				let eth = gweiToEth(x as any as string)
+				expect(compare).eq(eth)
+			}),
+		}
 	}
 	function fillTxEos(address: string, amount: string, memo: string)
 	{
@@ -47,7 +78,7 @@ describe('tx generation', () =>
 
 		newTx()
 
-		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '3')
+		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345')
 		cy.get('[data-cy=form-usd]', { timeout: 10000 }).invoke('val').should('match', /^\d+\.\d*$/)
 
 		cy.contains(/sign/i).click()
@@ -57,14 +88,14 @@ describe('tx generation', () =>
 		cy.visit('/wallet/eth/0x036800cca6e1b092f53dde40c30efbd4c59cb3c8?chainId=4')
 		cy.contains(/send/i).click()
 
-		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '3')
+		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345')
 		cy.contains(/sign/i).click()
 	})
 	it('should open tx creation window through direct txcreate link', () =>
 	{
 		cy.visit('/wallet/eth/0x036800cca6e1b092f53dde40c30efbd4c59cb3c8/create?chainId=4')
 
-		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '3')
+		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345')
 		cy.contains(/sign/i).click()
 	})
 	it('should open eth wallet without chain id', () =>
@@ -129,12 +160,13 @@ describe('tx generation', () =>
 		address: string
 		chainId: string | number
 	}
-	it('should generate tx request', () =>
+	it('should generate tx request', () =>	
 	{
 		cy.visit('/login')
 
 		newTx()
-		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', "73.1")
+		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345')
+		let gasExpect = checkGasPriceFactory()
 		cy.get('[data-cy=form-usd', { timeout: 10000 }).invoke('val').should('match', /^\d+\.\d*$/)
 		cy.contains(/sign/i).click()
 
@@ -152,8 +184,10 @@ describe('tx generation', () =>
 			
 			expect(tx.value).eq('45012345000000000000')
 			assert.isNumber(tx.nonce)
-			expect(tx.gasPrice).match(/^73100000000$/)
 			expect(tx.to.toLowerCase()).eq(wallet.address.toLowerCase())
+
+			gasExpect.total()
+			gasExpect.price(tx.gasPrice)
 		})
 	})
 	it('should not work without form values', () =>
@@ -170,7 +204,7 @@ describe('tx generation', () =>
 
 		newTx()
 
-		fillTx('zzz', '0', '0')
+		fillTx('zzz', '0')
 		cy.contains(/sign/i).should('be.disabled')
 	})
 	it('should not work with incorrect eth value', () =>
@@ -179,7 +213,7 @@ describe('tx generation', () =>
 
 		newTx()
 
-		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', 'uuu', '2')
+		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', 'uuu')
 		cy.contains(/sign/i).should('be.disabled')
 	})
 	it('short', () =>
@@ -230,7 +264,8 @@ describe('tx generation', () =>
 		cy.get('[data-cy=error]').should('not.exist')
 		// console.log('((( 4')
 		// console.log('((( 5')
-		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345', '4')
+		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345')
+		let gasExpect = checkGasPriceFactory()
 		cy.get('[data-cy=form-usd', { timeout: 10000 }).invoke('val').should('match', /^\d+\.\d*$/)
 		// console.log('((( 6')
 		
@@ -258,7 +293,8 @@ describe('tx generation', () =>
 
 			expect(tx.value).eq('45012345000000000000')
 			assert.isNumber(tx.nonce)
-			expect(tx.gasPrice).match(/^4000000000$/)
+			gasExpect.total()
+			gasExpect.price(tx.gasPrice)
 			expect(tx.to.toLowerCase()).eq(wallet.address.toLowerCase())
 
 			cb(undefined, SIGNED_TX_RESPONSE)
@@ -409,6 +445,17 @@ describe('tx generation', () =>
 		cy.contains(/send/i)
 		cy.contains(/erc20/i).should('not.exist')
 	})
+	it.skip('should load ETH token info on the fly', () =>
+	{
+		cy.visit('/wallet/eth/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/erc20?chainId=4')
+		
+		cy.get('[data-cy=form-token] input').type('0xf035755df96ad968a7ad52c968dbe86d52927f5b')
+		cy.contains(/MAAT/)
+		cy.contains(/Your balance\: \d+(\.\d+)? MAAT/i)
+
+		// cy.visit('/wallet/eth/0x32Be343B94f860124dC4fEe278FDCBD38C102D88/erc20?chainId=4')
+		// cy.get('[data-cy=form-token] input').type('0xf035755df96ad968a7ad52c968dbe86d52927f5b')
+	})
 	it('should generate ETH token transfer', () =>
 	{
 		cy.visit('/wallet/eth/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/erc20?chainId=4')
@@ -446,5 +493,45 @@ describe('tx generation', () =>
 			expect(tx.data).eq('0xa9059cbb0000000000000000000000005dcd6e2d92bc4f96f9072a25cc8d4a3a4ad07ba00000000000000000000000000000000000000000000000000000000000000001')
 			expect(parseInt(tx.gasLimit)).gte(50000)
 		})
+	})
+	it.skip('screenshots', () =>
+	{
+		function visitAll(prefix: string)
+		{
+			let _ = (filename: string) => cy.screenshot(prefix + filename)
+			
+			// home
+			cy.visit('/')
+			_('0010-index')
+			cy.visit('/login')
+			_('0020-login')
+			cy.visit('/webrtc')
+			_('0030-webrtc')
+
+			// wallet list
+			cy.visit('/login')
+			showQrText(qrs.login_single_eth_wallet)
+			cy.url().should('include', '/wallets')
+			_('0040-wallets')
+
+			// wallet
+			cy.visit('/wallet/eth/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0?chainId=4')
+			cy.wait(500) // wait until tx list loads
+			_('0050-wallet-eth-rinkeby')
+			cy.visit('/wallet/eth/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0')
+			cy.wait(500) // wait until tx list loads
+			_('0050-wallet-eth-mainnet')
+			
+			// forms
+			cy.contains('send').click()
+			_('0060-createtx-eth')
+			cy.visit('/wallet/eth/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/erc20')
+			// cy.contains('erc20').click()
+			_('0060-erc20-eth')
+		}
+		
+		visitAll('normal_')
+		cy.viewport(1920, 1080)
+		visitAll('fullhd_')
 	})
 })
