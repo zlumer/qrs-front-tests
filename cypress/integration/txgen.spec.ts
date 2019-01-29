@@ -468,7 +468,7 @@ describe('tx generation', () =>
 		// cy.get('[data-cy=form-to]').type('0x0000000000000000000000000000000000000000')
 		cy.get('[data-cy=form-to]').type('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0')
 		cy.get('[data-cy=form-amount]').type(`0.${'0'.repeat(17)}1`)
-		cy.get('[data-cy=form-gas]').type('5')
+		let gasExpect = checkGasPriceFactory()
 
 		cy.contains(/sign/i).click()
 
@@ -492,6 +492,9 @@ describe('tx generation', () =>
 			expect(method).eq('transfer(address,uint256)')
 			expect(tx.data).eq('0xa9059cbb0000000000000000000000005dcd6e2d92bc4f96f9072a25cc8d4a3a4ad07ba00000000000000000000000000000000000000000000000000000000000000001')
 			expect(parseInt(tx.gasLimit)).gte(50000)
+			
+			gasExpect.total()
+			gasExpect.price(tx.gasPrice)
 		})
 	})
 	it.skip('screenshots', () =>
