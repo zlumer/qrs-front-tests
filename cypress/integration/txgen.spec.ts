@@ -28,7 +28,7 @@ describe('tx generation', () =>
 	}
 	function checkGasPriceFactory(tag: string = '')
 	{
-		cy.get('[data-cy=gas-slider]').should('exist')
+		cy.get('[data-cy=gas-slider]', { timeout: 10000 }).should('exist')
 		let total = `gasTotal${tag}`
 		let price = `gasPrice${tag}`
 		getEthGas().as(total)
