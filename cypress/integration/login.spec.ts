@@ -46,7 +46,7 @@ describe('login test', () =>
 		
 		cy.get('[data-cy=video-ready]').should('exist')
 		
-		checkShownQr(/getWalletList\|\d+\|{"blockchains":\["eth"\]}/)
+		checkShownQr(/getWalletList\|\d+\|{"blockchains":\["eth"(\,"eos")?\]}/)
 		// console.log(`#$# 4`)
 		showQrText(qrs.login_single_eth_wallet)
 		// console.log(`#$# 5`)
@@ -67,7 +67,7 @@ describe('login test', () =>
 		
 		cy.get('[data-cy=video-ready]').should('exist')
 
-		checkShownQr(/^getWalletList\|\d+\|{"blockchains":\["eth"\]}$/)
+		checkShownQr(/^getWalletList\|\d+\|{"blockchains":\["eth"(\,"eos")?\]}$/)
 		showQrText(qrs.login_single_eth_wallet)
 		
 		// cy.url().should('include', '/wallets')
@@ -119,7 +119,7 @@ describe('login test', () =>
 			cy.url().should('include', '/login')
 			cy.get('[data-cy=video-ready]').should('exist')
 			
-			checkShownQr(/^getWalletList\|\d+\|{"blockchains":\["eth"\]}$/)
+			checkShownQr(/^getWalletList\|\d+\|{"blockchains":\["eth"(\,"eos")?\]}$/)
 		})
 	})
 	it('should connect webrtc on 2nd try', () =>

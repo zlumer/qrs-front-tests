@@ -3,6 +3,7 @@ import { getSingleton as getWebrtc } from "../../src/helpers/webrtc/webrtcsingle
 
 import { checkWebrtcQr } from "./interact_qr"
 import { parseHostMessage, IHCSimple } from "../../src/helpers/webrtc/hostproto"
+import * as config from "./config"
 
 export function connectWebsocket(onIncoming: RequestHandler, onOpen: (offer: string, jrpc: JsonRpc) => void)
 {
@@ -44,9 +45,9 @@ export function connectWebrtc()
 			expect(json.method).eq("getWalletList")
 			// console.log("^^^ 5")
 			if (Array.isArray(json.params))
-				expect(json.params).eql([['eth']])
+				expect(json.params).eql([config.blockchains])
 			else
-				expect(json.params).eql({blockchains:['eth']})
+				expect(json.params).eql({blockchains: config.blockchains})
 			
 			// console.log("^^^ 8")
 			closeWs()
@@ -130,9 +131,9 @@ export function connectFallback()
 					expect(innerJson!.method).eq('getWalletList')
 					// console.log('$$$$$$ 15')
 					if (Array.isArray(innerJson.params))
-						expect(innerJson.params).eql([['eth']])
+						expect(innerJson.params).eql([config.blockchains])
 					else
-						expect(innerJson.params).eql({blockchains:['eth']})
+						expect(innerJson.params).eql({blockchains: config.blockchains})
 
 					jrpc.callRaw('fallback', {
 						msg: JSON.stringify({
