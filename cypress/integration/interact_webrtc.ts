@@ -30,8 +30,11 @@ export function connectWebsocket(onIncoming: RequestHandler, onOpen: (offer: str
 		return [ws, jrpc] as [WebSocket, JsonRpc]
 	})
 }
-export function connectWebrtc()
+export function connectWebrtc(blockchains?: string[])
 {
+	if (!blockchains)
+		blockchains = config.blockchains
+	
 	let webrtc = getWebrtc()
 	let closeWs: () => void
 
@@ -45,9 +48,9 @@ export function connectWebrtc()
 			expect(json.method).eq("getWalletList")
 			// console.log("^^^ 5")
 			if (Array.isArray(json.params))
-				expect(json.params).eql([config.blockchains])
+				expect(json.params).eql([blockchains])
 			else
-				expect(json.params).eql({blockchains: config.blockchains})
+				expect(json.params).eql({ blockchains })
 			
 			// console.log("^^^ 8")
 			closeWs()
