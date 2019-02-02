@@ -41,8 +41,8 @@ export function loadQrFromBase64(src: string)
 			let canvas = document.createElement('canvas')
 			let ctx = canvas.getContext('2d')!
 			let loader = new Image()
-			loader.width = canvas.width = 600
-			loader.height = canvas.height = 600
+			loader.width = canvas.width = 900
+			loader.height = canvas.height = 900
 			loader.onload = () =>
 			{
 				ctx.drawImage(loader, 0, 0, loader.width, loader.height)
@@ -53,6 +53,7 @@ export function loadQrFromBase64(src: string)
 				res(qr!.data)
 			}
 			// cy.wait(50)
+			// console.log(src)
 			loader.src = src
 			// cy.wait(50)
 		})
