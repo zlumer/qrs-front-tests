@@ -30,7 +30,7 @@ describe('login test', () =>
 	it('should render login page correctly', () =>
 	{
 		cy.visit('/')
-		cy.contains(/airgapped/i).click()
+		cy.get('[data-cy=login-qr]').click()
 		cy.url().should('include', '/login')
 		cy.get('[data-cy=video-ready]').should('exist')
 	})
@@ -40,7 +40,7 @@ describe('login test', () =>
 		// console.log(`#$# 1`)
 		cy.visit('/')
 		// console.log(`#$# 2`)
-		cy.contains(/airgapped/i).click()
+		cy.get('[data-cy=login-qr]').click()
 		// console.log(`#$# 3`)
 		cy.url().should('include', '/login')
 		
@@ -80,7 +80,7 @@ describe('login test', () =>
 	{
 		cy.visit('/')
 		// cy.contains('WebRTC login').click()
-		cy.contains(/online/i).click()
+		cy.get('[data-cy=login-webrtc]').click()
 
 		cy.url().should('match', /[\/webrtc|\/login\?rtc=true]/)
 
@@ -96,25 +96,25 @@ describe('login test', () =>
 	it('should connect webrtc', () =>
 	{
 		cy.visit('/')
-		cy.contains(/online/i).click()
+		cy.get('[data-cy=login-webrtc]').click()
 		
 		connectWebrtc()
 	})
 	it('should connect webrtc 2nd time', () =>
 	{
 		cy.visit('/')
-		cy.contains(/online/i).click()
+		cy.get('[data-cy=login-webrtc]').click()
 		
 		connectWebrtc()
 	})
 	it('REGRESSION: should show qr after webrtc login', () =>
 	{
 		cy.visit('/')
-		cy.contains(/online/i).click()
+		cy.get('[data-cy=login-webrtc]').click()
 		checkWebrtcQr().then(() =>
 		{
 			cy.go('back')
-			cy.contains(/airgapped/i).click()
+			cy.get('[data-cy=login-qr]').click()
 
 			cy.url().should('include', '/login')
 			cy.get('[data-cy=video-ready]').should('exist')
@@ -125,11 +125,11 @@ describe('login test', () =>
 	it('should connect webrtc on 2nd try', () =>
 	{
 		cy.visit('/')
-		cy.contains(/online/i).click()
+		cy.get('[data-cy=login-webrtc]').click()
 		checkWebrtcQr().then(() =>
 		{
 			cy.go('back')
-			cy.contains(/online/i).click()
+			cy.get('[data-cy=login-webrtc]').click()
 
 			connectWebrtc()
 		})
@@ -138,7 +138,7 @@ describe('login test', () =>
 	it('should login with qr multiple wallets', () =>
 	{
 		cy.visit('/')
-		cy.contains(/airgapped/i).click()
+		cy.get('[data-cy=login-qr]').click()
 		
 		showQrText(qrs.login_multiple_eth_wallets)
 
@@ -150,7 +150,7 @@ describe('login test', () =>
 	it('should connect with websocket fallback', () =>
 	{
 		cy.visit('/')
-		cy.contains(/online/i).click()
+		cy.get('[data-cy=login-webrtc]').click()
 
 		connectFallback()
 	})
