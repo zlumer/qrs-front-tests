@@ -222,7 +222,7 @@ describe('tx generation', () =>
 		getWebrtc().jrpc.switchToQueueMode()
 
 		cy.visit('/')
-		cy.contains(/online login/i).click()
+		cy.get('[data-cy=login-webrtc]').click()
 		cy.url().should('match', /\/login|\/webrtc/)
 	})
 	it('should generate webrtc tx', () =>
@@ -246,7 +246,7 @@ describe('tx generation', () =>
 				cy.stub(win, "__eth__sendTx" as keyof typeof win, f).as("ethSendTx")
 			}
 		})
-		cy.contains(/online login/i).click()
+		cy.get('[data-cy=login-webrtc]').click()
 		cy.url().should('match', /\/login|\/webrtc/)
 
 		// console.log('((( 1')
@@ -363,7 +363,7 @@ describe('tx generation', () =>
 				cy.stub(win as any, "__eos__sendTx").as("eosSendTx")
 			}
 		})
-		cy.contains(/online login/i).click()
+		cy.get('[data-cy=login-webrtc]').click()
 		cy.url().should('match', /\/login|\/webrtc/)
 
 		// console.log('((( 1')

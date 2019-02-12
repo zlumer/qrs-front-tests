@@ -12,7 +12,7 @@ describe('tx lists', () =>
 	it('should show tx list on multiple eth wallets', () =>
 	{
 		cy.visit('/')
-		cy.contains(/airgapped/i).click()
+		cy.get('[data-cy=login-qr]').click()
 		
 		showQrText(qrs.login_multiple_eth_wallets)
 

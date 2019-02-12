@@ -23,8 +23,8 @@ describe('login test', () =>
 	it('should render main page', () =>
 	{
 		cy.visit('/')
-		cy.contains(/airgapped/i)
-		cy.contains(/online/i)
+		cy.get('[data-cy=login-qr]').should('exist')
+		cy.get('[data-cy=login-webrtc]').should('exist')
 		cy.get('[data-cy=video-ready]').should('not.exist')
 	})
 	it('should render login page correctly', () =>
