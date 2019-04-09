@@ -318,11 +318,16 @@ describe('tx generation', () =>
 		checkShownQr(/^signTransferTx\|\d+\|.+$/).then(qr =>
 		{
 			console.log('QRRR: ', qr)
-			let msg = parseHostMessage(qr) as IHCSimple<{ transaction: IEosTransaction }, { method: string }, { wallet: IWallet }>
+			let msg = parseHostMessage(qr) as IHCSimple<{ tx: { transaction: IEosTransaction, method: string } }, { wallet: IWallet }>
 			assert(msg, `host message is not defined`)
 			expect(msg.method).eq('signTransferTx')
 			assert(msg.params, `host message params are not defined`)
-			let [tx, abi, wallet] = Array.isArray(msg.params) ? msg.params : [msg.params.transaction, msg.params.method, msg.params.wallet]
+			
+			let [transaction, wallet] = Array.isArray(msg.params) ? msg.params : [msg.params.tx, msg.params.wallet]
+			assert(transaction, `msg.tx should be defined`)
+			let { transaction: tx, method: abi } = transaction
+			assert(tx, `msg.tx should contain 'transaction' field`)
+			assert(abi, `msg.tx should contain 'method' field`)
 			
 			expect(wallet.address).eq('cryptoman111')
 			expect(wallet.blockchain).eq('eos')
@@ -395,13 +400,18 @@ describe('tx generation', () =>
 		
 		cy.wrap(webrtc.jrpc.nextMessage()).then(tuple =>
 		{
-			let [json, cb] = tuple as RequestHandlerTuple<IHCSimple<{transaction: IEosTransaction}, { method: string }, { wallet: IWallet }>, string>
+			let [json, cb] = tuple as RequestHandlerTuple<IHCSimple<{ tx: { transaction: IEosTransaction, method: string }}, { wallet: IWallet }>, string>
 			
 			// console.log('((( 8')
 			expect(json.method).eq('signTransferTx')
 			// console.log('((( 9')
-			let [tx, abi, wallet] = Array.isArray(json.params) ? json.params : [json.params.transaction, json.params.method, json.params.wallet]
 			// console.log('((( 10')
+			
+			let [transaction, wallet] = Array.isArray(json.params) ? json.params : [json.params.tx, json.params.wallet]
+			assert(transaction, `msg.tx should be defined`)
+			let { transaction: tx, method: abi } = transaction
+			assert(tx, `msg.tx should contain 'transaction' field`)
+			assert(abi, `msg.tx should contain 'method' field`)
 
 			assert.isDefined(tx, 'transaction should be defined')
 			assert.isDefined(abi, 'method should be defined!')
