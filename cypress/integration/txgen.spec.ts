@@ -20,7 +20,7 @@ describe('tx generation', () =>
 	}
 	function getGasPrice()
 	{
-		return cy.get('.vue-slider-tooltip-top > .vue-slider-tooltip').then(subj => subj.text())
+		return cy.get('.vue-slider-dot-tooltip-text').then(subj => subj.text())
 	}
 	function gweiToEth(gwei: string)
 	{
@@ -37,12 +37,12 @@ describe('tx generation', () =>
 			total: () => cy.get(`@${total}`).then(x => expect(x).match(/^0\.\d* ETH$/)),
 			price: (compare?: string) => cy.get(`@${price}`).then(x =>
 			{
-				expect(x).match(/^\d+(\.\d+)?$/)
+				expect(x).match(/^\d+(\.\d+)?$/, `gas price should be a number!`)
 				if (typeof compare === 'undefined')
 					return
 				
 				let eth = gweiToEth(x as any as string)
-				expect(compare).eq(eth)
+				expect(compare).eq(eth, `gas prices should match! got ${x}, expected ${compare}`)
 			}),
 		}
 	}
@@ -68,7 +68,7 @@ describe('tx generation', () =>
 	{
 		showQrText(qrs.login_single_eos_wallet)
 		cy.contains(/cryptoman111/i).click()
-		cy.get('[data-cy=tx-list]').should('exist')
+		cy.get('[data-cy=tx-list]', { timeout: 10000 }).should('exist')
 		cy.get('[data-cy=error]').should('not.exist')
 		cy.contains(/send eos/i).click()
 	}
@@ -160,13 +160,13 @@ describe('tx generation', () =>
 		address: string
 		chainId: string | number
 	}
-	it('should generate tx request', () =>	
+	it('should generate tx request', () =>
 	{
 		cy.visit('/login')
 
 		newTx()
 		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345')
-		let gasExpect = checkGasPriceFactory()
+		let gasExpect = checkGasPriceFactory('gen1')
 		cy.get('[data-cy=form-usd', { timeout: 10000 }).invoke('val').should('match', /^\d+\.\d*$/)
 		cy.contains(/sign/i).click()
 
