@@ -9,6 +9,16 @@ describe('tx lists', () =>
 		cy.visit('/wallet/eth/0x036800cca6e1b092f53dde40c30efbd4c59cb3c8?chainId=4')
 		cy.get('[data-cy=tx-list]').should('exist')
 	})
+	it('should show tx list on an eos wallet via direct link', () =>
+	{
+		cy.visit('/wallet/eos/cryptoman111')
+		cy.get('[data-cy=tx-list]').should('exist')
+	})
+	it('should show tx list on a btc wallet via direct link', () =>
+	{
+		cy.visit('/wallet/btc/mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn?chainId=6f')
+		cy.get('[data-cy=tx-list]').should('exist')
+	})
 	it('should show tx list on multiple eth wallets', () =>
 	{
 		cy.visit('/')
