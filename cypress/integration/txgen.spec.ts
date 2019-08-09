@@ -306,7 +306,7 @@ describe('tx generation', () =>
 			cy.get('[data-cy=error]').should('not.exist')
 		})
 	})
-	it.only('should redirect back to wallet after tx push', () =>
+	it('should redirect back to wallet after tx push', () =>
 	{
 		let SIGNED_TX_RESPONSE = '0x1234611325'
 		let SIGNED_TX_RESPONSE_HASH = '0xe8dad6daa4da90d0c03308e5d92c61b6a663a13169fa89bdf2f9dd772910196a'
