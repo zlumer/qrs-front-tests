@@ -306,6 +306,52 @@ describe('tx generation', () =>
 			cy.get('[data-cy=error]').should('not.exist')
 		})
 	})
+	it.only('should redirect back to wallet after tx push', () =>
+	{
+		let SIGNED_TX_RESPONSE = '0x1234611325'
+		let SIGNED_TX_RESPONSE_HASH = '0xe8dad6daa4da90d0c03308e5d92c61b6a663a13169fa89bdf2f9dd772910196a'
+
+		cy.visit('/wallet/eth/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0/create?chainId=4', {
+			onBeforeLoad: (win) =>
+			{
+				let f = (win as any).__eth__sendTx = (str: string) =>
+				{
+					console.log(`CYPRESS: __eth__sendTx("${str}")`)
+					expect(str).eq(SIGNED_TX_RESPONSE)
+					return { transactionHash: SIGNED_TX_RESPONSE_HASH }
+				}
+				cy.stub(win, "__eth__sendTx" as keyof typeof win, f).as("ethSendTx")
+			}
+		})
+		// fill out the form
+		fillTx('0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0', '45.012345')
+		// send sign request
+		cy.contains(/sign/i).click()
+
+		checkShownQr(/^signTransferTx\|\d+\|.+$/).then(qr =>
+		{
+			console.log('QRRR: ', qr)
+			let msg = parseHostMessage(qr) as IHCSimple<{tx: IEthTransaction}, { wallet: IWallet }>
+			expect(msg.method).eq('signTransferTx')
+
+			// show qr code with response
+			showQrText(`|${msg.id}|"${SIGNED_TX_RESPONSE}"`)
+			
+			// wait until fake push method is called (window.__eth__sendTx())
+			cy.get("@ethSendTx").should('be.calledWithExactly', SIGNED_TX_RESPONSE)
+
+			// check that the page was redirected
+			cy.url().should('match', /\/pushtx\/eth\/0x\w{64}/)
+			cy.url().should('contain', SIGNED_TX_RESPONSE_HASH)
+			cy.get('[data-cy=result-hash]').should('exist')
+			cy.get('[data-cy=error]').should('not.exist')
+
+			// close the window
+			cy.get('.cross').click()
+			// MAIN CHECK: check that we are still in our wallet
+			cy.url().should('match', /\/wallet\/eth\/0x5DcD6E2D92bC4F96F9072A25CC8d4a3A4Ad07ba0\?chainId=4/)
+		})
+	})
 	it('should generate EOS tx request', () =>
 	{
 		cy.visit('/login')
