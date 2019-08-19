@@ -17,7 +17,12 @@ describe('tx lists', () =>
 	it('should show tx list on a btc wallet via direct link', () =>
 	{
 		cy.visit('/wallet/btc/mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn?chainId=6f')
-		cy.get('[data-cy=tx-list]').should('exist')
+		cy.get('[data-cy=tx-list]', {timeout: 10000}).should('exist')
+	})
+	it('should show tx list on a bch wallet via direct link', () =>
+	{
+		cy.visit('/wallet/bch/qpkxhhyumvx07s3cluq7un367mnxzgzswy4el8tn4w?chainId=00')
+		cy.get('[data-cy=tx-list]', {timeout: 10000}).should('exist')
 	})
 	it('should show tx list on multiple eth wallets', () =>
 	{

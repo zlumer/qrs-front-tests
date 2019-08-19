@@ -1,1 +1,1 @@
-export const blockchains = ['eth', 'eos', 'btc']
+export const blockchains = ['eth', 'eos', 'btc', 'bch']
